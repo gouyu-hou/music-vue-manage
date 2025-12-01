@@ -1,17 +1,20 @@
 <template>
   <div>
     <p>
-      <!-- v-model="name"绑定了变量name -->
       <el-input
         v-model="name"
         placeholder="请输入关键字"
         clearable
         style="width: 300px"
+        @clear="query"
       ></el-input>
-      <el-button type="success" @click="query">查询</el-button>
-      <el-button type="primary" @click="handleAdd">新增</el-button>
+      <el-button type="success" @click="query" icon="el-icon-search"
+        >查询</el-button
+      >
+      <el-button type="primary" @click="handleAdd" icon="el-icon-plus"
+        >新增</el-button
+      >
     </p>
-    <!-- dom 数据 绑定了数据源tableData -->
     <el-table :data="tableData" style="width: 100%">
       <el-table-column prop="id" label="编号" width="180"> </el-table-column>
       <el-table-column prop="username" label="姓名" width="180">
@@ -27,26 +30,38 @@
         <template slot-scope="scope">
           <img
             :src="getImageUrl(scope.row.avator)"
-            style="width: 80px; height: 80px"
+            style="width: 80px; height: 80px; border-radius: 5px"
           />
         </template>
       </el-table-column>
       <el-table-column prop="phoneNum" label="手机号码"> </el-table-column>
-      <el-table-column label="操作">
+      <el-table-column label="操作" width="220">
         <template slot-scope="scope">
-          <el-button size="mini" @click="handleEdit(scope.$index, scope.row)"
-            >Edit</el-button
+          <el-button
+            size="mini"
+            type="primary"
+            icon="el-icon-edit"
+            @click="handleEdit(scope.$index, scope.row)"
+            >编辑</el-button
           >
+
           <el-popconfirm
             title="这是一段内容确定删除吗？"
             @confirm="handleDelete(scope.$index, scope.row)"
+            style="margin-left: 10px"
           >
-            <el-button slot="reference" type="danger">删除</el-button>
+            <el-button
+              slot="reference"
+              size="mini"
+              type="danger"
+              icon="el-icon-delete"
+              >删除</el-button
+            >
           </el-popconfirm>
         </template>
       </el-table-column>
     </el-table>
-    <!-- 分页 -->
+
     <el-pagination
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
@@ -57,17 +72,15 @@
       :total="total"
     >
     </el-pagination>
-    <!-- 对话框 -->
+
     <el-dialog
-      title="提示"
+      :title="dialogTitle"
       :visible.sync="dialogVisible"
       width="30%"
       :before-close="handleClose"
     >
-      <!--  :model="form" 绑定了某个对象 -->
       <el-form ref="form" :model="form" label-width="80px">
         <el-form-item label="头像">
-          <!-- 上传组件 -->
           <el-upload
             class="avatar-uploader"
             action="http://localhost:8085/music/file/avatar/upload"
@@ -80,10 +93,13 @@
           </el-upload>
         </el-form-item>
         <el-form-item label="名称">
-          <el-input v-model="form.username"></el-input>
+          <el-input
+            v-model="form.username"
+            placeholder="请输入用户名"
+          ></el-input>
         </el-form-item>
         <el-form-item label="密码">
-          <el-input v-model="form.password"></el-input>
+          <el-input v-model="form.password" placeholder="请输入密码"></el-input>
         </el-form-item>
         <el-form-item label="性别">
           <el-select
@@ -96,17 +112,10 @@
           </el-select>
         </el-form-item>
         <el-form-item label="手机">
-          <el-input v-model="form.phoneNum"></el-input>
-        </el-form-item>
-        <el-form-item label="文件">
-          <el-upload
-            class="upload-demo"
-            action="http://localhost:8085/music/file/music/upload"
-            :file-list="fileList"
-            :on-success="handleFileSuccess"
-          >
-            <el-button size="small" type="primary">点击上传</el-button>
-          </el-upload>
+          <el-input
+            v-model="form.phoneNum"
+            placeholder="请输入手机号"
+          ></el-input>
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
@@ -116,15 +125,15 @@
     </el-dialog>
   </div>
 </template>
-<!-- js 中有对象数据 -->
+
 <script>
 import request from "../utils/request";
 export default {
-  //vue对象中的数据==data
   data() {
     return {
       tableData: [],
       dialogVisible: false,
+      dialogTitle: "", // 【新增】用于控制对话框标题
       name: "",
       pageNum: 1,
       size: 4,
@@ -138,103 +147,122 @@ export default {
         phoneNum: "",
         avator: "",
       },
-      fileList: [],
     };
   },
-  //生命周期：vue创建成功后触发的函数
   created: function () {
-    //发起查询
     this.query();
   },
-  //定义函数集
   methods: {
-    //上传成功后的处理
-    // handleAvatarSuccess(res, file) {
-    //     this.fileList = res;
-    //     this.form.url = res.url
-    //     console.log("res[0].name=" + res.url);
-    // },
     getImageUrl(path) {
-      console.log("path=" + "http://localhost:8085" + path);
+      if (!path) return "";
+      if (path.indexOf("http") === 0) return path;
       return "http://localhost:8085" + path;
     },
-    // 【保留并修改】使用这一段，确保赋值给 form.avator
+
     handleAvatarSuccess(res, file) {
-      // 1. 如果 res 是字符串，手动转成 JSON 对象
       if (typeof res === "string") {
-        res = JSON.parse(res);
+        try {
+          res = JSON.parse(res);
+        } catch (e) {
+          console.error(e);
+          return this.$message.error("上传响应解析失败");
+        }
       }
-
-      // 前端显示图片预览
       this.imageUrl = URL.createObjectURL(file.raw);
-
-      // 2. 判断 success
-      // 注意：有的后端返回 code:1，有的返回 success:true，请根据您的实际打印结果调整
       if (res.success || res.code === 1) {
-        // 3. 赋值给表单
         this.form.avator = res.path;
         this.$message.success("上传成功");
-        console.log("上传成功，新路径已赋值:", this.form.avator);
       } else {
         this.$message.error(res.message || "上传失败");
       }
     },
-    // 在 methods 中添加
-    handleFileSuccess(res, file) {
-      if (!res.success) {
-        // 这里根据您的业务逻辑处理，不要赋值给 this.form.avator
-        console.log("文件上传路径：" + res.path);
-        this.$message.success("文件上传成功");
-      } else {
-        this.$message.error("文件上传失败");
-      }
-    },
+
     beforeAvatarUpload(file) {
       const isJPG = file.type === "image/jpeg" || file.type === "image/png";
       const isLt10M = file.size / 1024 / 1024 < 10;
       if (!isJPG) {
-        this.$message.error("上传头像图片只能是 JPG\png 格式!");
+        this.$message.error("上传头像图片只能是 JPG/PNG 格式!");
       }
       if (!isLt10M) {
         this.$message.error("上传头像图片大小不能超过 10MB!");
       }
       return isJPG && isLt10M;
     },
-    //记录条数的变化
+
     handleSizeChange(val) {
-      console.log(`每页 ${val} 条`);
-      //变更查询条数
       this.size = val;
-      //查询数据
       this.query();
     },
-    //页码的变化
     handleCurrentChange(val) {
-      console.log(`当前页: ${val}`);
-      //变更当前页码
       this.pageNum = val;
-      //查询数据
       this.query();
     },
-    //提交处理-发起请求
+
+    // 【修改点3】完善新增逻辑
+    handleAdd() {
+      this.dialogTitle = "添加用户"; // 设置标题
+      this.dialogVisible = true;
+
+      // 彻底重置表单，给性别默认值
+      this.form = {
+        id: "",
+        username: "",
+        password: "",
+        sex: "1", // 默认为男
+        phoneNum: "",
+        avator: "",
+      };
+
+      this.imageUrl = ""; // 清空图片预览
+
+      // 清除可能存在的表单验证红字
+      this.$nextTick(() => {
+        if (this.$refs.form) {
+          this.$refs.form.clearValidate();
+        }
+      });
+    },
+
+    // 【修改点4】完善编辑逻辑
+    handleEdit(index, row) {
+      this.dialogTitle = "修改用户"; // 设置标题
+      this.dialogVisible = true;
+
+      // 赋值数据
+      this.form.id = row.id;
+      this.form.username = row.username;
+      this.form.password = row.password;
+      this.form.sex = row.sex;
+      this.form.phoneNum = row.phoneNum;
+      this.form.avator = row.avator;
+
+      // 设置预览图
+      if (row.avator) {
+        this.imageUrl = this.getImageUrl(row.avator);
+      } else {
+        this.imageUrl = "";
+      }
+
+      // 清除验证状态
+      this.$nextTick(() => {
+        if (this.$refs.form) {
+          this.$refs.form.clearValidate();
+        }
+      });
+    },
+
     submit() {
-      //发起查询
       request.post("/consumer/update", this.form).then((res) => {
         if (res.success == true) {
-          this.$message({
-            message: "操作成功",
-            type: "success",
-          });
-          //关闭对话框
+          this.$message.success("操作成功");
           this.dialogVisible = false;
-          //重新查询数据
           this.query();
         } else {
           this.$message.error("操作失败");
         }
       });
     },
-    //封装查询请求
+
     query() {
       request
         .get("consumer/list", {
@@ -245,46 +273,11 @@ export default {
           },
         })
         .then((res) => {
-          console.log(res);
           this.tableData = res.list;
           this.total = res.total;
         });
     },
-    // 点击新增
-    handleAdd() {
-      this.dialogVisible = true;
-      this.form.id = "";
-      this.form.username = "";
-      this.form.password = "";
-      this.form.sex = "";
-      this.form.phoneNum = "";
-      this.imageUrl = "";
-    },
-    // 点击编辑
-    handleEdit(index, row) {
-      console.log(index, row);
 
-      // 显示对话框
-      this.dialogVisible = true;
-
-      // 将row赋值到form
-      this.form.id = row.id;
-      this.form.username = row.username;
-      this.form.password = row.password;
-      this.form.sex = row.sex;
-      this.form.phoneNum = row.phoneNum;
-
-      // 【新增修复】必须把原有的头像路径赋值给 form，否则不修改图片提交时字段为空
-      this.form.avator = row.avator;
-
-      // 设置预览图（如果有头像，就显示原来的，没有就置空）
-      if (row.avator) {
-        this.imageUrl = this.getImageUrl(row.avator);
-      } else {
-        this.imageUrl = "";
-      }
-    },
-    // 点击删除
     handleDelete(index, row) {
       request
         .get("/consumer/delete", {
@@ -294,17 +287,14 @@ export default {
         })
         .then((res) => {
           if (res.success == true) {
-            this.$message({
-              message: "删除成功",
-              type: "success",
-            });
-            //重新查询数据
+            this.$message.success("删除成功");
             this.query();
           } else {
             this.$message.error("删除失败");
           }
         });
     },
+
     handleClose(done) {
       this.$confirm("确认关闭？")
         .then((_) => {
@@ -324,11 +314,9 @@ export default {
   position: relative;
   overflow: hidden;
 }
-
 .avatar-uploader .el-upload:hover {
   border-color: #409eff;
 }
-
 .avatar-uploader-icon {
   font-size: 28px;
   color: #8c939d;
@@ -337,7 +325,6 @@ export default {
   line-height: 178px;
   text-align: center;
 }
-
 .avatar {
   width: 178px;
   height: 178px;

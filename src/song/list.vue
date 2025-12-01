@@ -8,8 +8,12 @@
         style="width: 300px"
         @clear="query"
       ></el-input>
-      <el-button type="success" @click="query">查询</el-button>
-      <el-button type="primary" @click="handleAdd">新增</el-button>
+      <el-button type="success" @click="query" icon="el-icon-search"
+        >查询</el-button
+      >
+      <el-button type="primary" @click="handleAdd" icon="el-icon-plus"
+        >新增</el-button
+      >
     </p>
     <el-table :data="tableData" style="width: 100%">
       <el-table-column prop="id" label="编号" width="180"></el-table-column>
@@ -24,18 +28,37 @@
         <template slot-scope="scope">
           <img
             :src="getImageUrl(scope.row.pic)"
-            style="width: 80px; height: 80px"
+            style="
+              width: 80px;
+              height: 80px;
+              border-radius: 5px;
+              object-fit: cover;
+            "
           />
         </template>
       </el-table-column>
-      <el-table-column label="操作">
+      <el-table-column label="操作" width="220">
         <template slot-scope="scope">
-          <el-button size="mini" @click="handleEdit(scope.row)">Edit</el-button>
+          <el-button
+            size="mini"
+            type="primary"
+            icon="el-icon-edit"
+            @click="handleEdit(scope.row)"
+            >编辑</el-button
+          >
+
           <el-popconfirm
             title="这是一段内容确定删除吗？"
             @confirm="handleDelete(scope.$index, scope.row)"
+            style="margin-left: 10px"
           >
-            <el-button slot="reference" type="danger">删除</el-button>
+            <el-button
+              slot="reference"
+              size="mini"
+              type="danger"
+              icon="el-icon-delete"
+              >删除</el-button
+            >
           </el-popconfirm>
         </template>
       </el-table-column>
@@ -53,7 +76,7 @@
     </el-pagination>
 
     <el-dialog
-      title="提示"
+      :title="dialogTitle"
       :visible.sync="dialogVisible"
       width="30%"
       :before-close="handleClose"
@@ -72,13 +95,19 @@
           </el-upload>
         </el-form-item>
         <el-form-item label="歌手编号">
-          <el-input v-model="form.singerId"></el-input>
+          <el-input
+            v-model="form.singerId"
+            placeholder="请输入歌手ID"
+          ></el-input>
         </el-form-item>
         <el-form-item label="名称">
-          <el-input v-model="form.name"></el-input>
+          <el-input v-model="form.name" placeholder="请输入歌名"></el-input>
         </el-form-item>
         <el-form-item label="简介">
-          <el-input v-model="form.introduction"></el-input>
+          <el-input
+            v-model="form.introduction"
+            placeholder="请输入简介"
+          ></el-input>
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
@@ -96,6 +125,7 @@ export default {
     return {
       tableData: [],
       dialogVisible: false,
+      dialogTitle: "", // 新增标题控制变量
       name: "",
       pageNum: 1,
       size: 4,
@@ -116,17 +146,13 @@ export default {
   },
   methods: {
     getImageUrl(path) {
-      // 防止 path 为空时报错或显示错误链接
       if (!path) return "";
-      // 如果已经是 http 开头（完整路径），直接返回
       if (path.indexOf("http") === 0) return path;
       console.log("path=" + "http://localhost:8085" + path);
       return "http://localhost:8085" + path;
     },
 
-    // 【修复点2 & 3】删除重复方法，增加JSON解析
     handlepicSuccess(res, file) {
-      // 1. 如果后端返回的是 JSON 字符串，手动转为对象
       if (typeof res === "string") {
         try {
           res = JSON.parse(res);
@@ -138,10 +164,9 @@ export default {
 
       this.imageUrl = URL.createObjectURL(file.raw);
 
-      // 2. 判断成功标识 (根据您的后端逻辑)
       if (res.success || res.code === 1) {
-        // 3. 将返回的相对路径赋值给表单
-        this.form.pic = res.path;
+        // 兼容 path 或 url
+        this.form.pic = res.path || res.url;
         this.$message.success("上传成功");
         console.log("上传成功，图片路径:", this.form.pic);
       } else {
@@ -160,16 +185,16 @@ export default {
       }
       return isJPG && isLt10M;
     },
+
     handleSizeChange(val) {
-      console.log(`每页 ${val} 条`);
       this.size = val;
       this.query();
     },
     handleCurrentChange(val) {
-      console.log(`当前页: ${val}`);
       this.pageNum = val;
       this.query();
     },
+
     submit() {
       request.post("songs", this.form).then((res) => {
         if (res == true) {
@@ -185,6 +210,7 @@ export default {
         }
       });
     },
+
     query() {
       request
         .get("songs", {
@@ -195,39 +221,60 @@ export default {
           },
         })
         .then((res) => {
-          console.log(res);
           this.tableData = res.list;
           this.total = res.total;
         });
     },
+
+    // 【修改点3】完善新增逻辑
     handleAdd() {
+      this.dialogTitle = "添加歌曲";
       this.dialogVisible = true;
-      this.form.id = "";
-      this.form.singerId = "";
-      this.form.name = "";
-      this.form.pic = "";
-      this.imageUrl = "";
-      this.form.introduction = "";
+
+      // 重置表单
+      this.form = {
+        id: "",
+        singerId: "",
+        name: "",
+        pic: "",
+        introduction: "",
+      };
+
+      this.imageUrl = ""; // 清空预览图
+
+      // 清空校验状态
+      this.$nextTick(() => {
+        if (this.$refs.form) {
+          this.$refs.form.clearValidate();
+        }
+      });
     },
-    // 【修复点4】确保编辑时图片路径回显
+
+    // 【修改点4】完善编辑逻辑
     handleEdit(row) {
+      this.dialogTitle = "修改歌曲";
       this.dialogVisible = true;
 
       this.form.id = row.id;
       this.form.singerId = row.singerId;
       this.form.name = row.name;
       this.form.introduction = row.introduction;
-
-      // 关键：将当前行的图片路径赋值给 form，防止提交时丢失
       this.form.pic = row.pic;
 
-      // 预览图片处理
       if (row.pic) {
         this.imageUrl = this.getImageUrl(row.pic);
       } else {
         this.imageUrl = "";
       }
+
+      // 清空校验状态
+      this.$nextTick(() => {
+        if (this.$refs.form) {
+          this.$refs.form.clearValidate();
+        }
+      });
     },
+
     handleDelete(index, row) {
       request.delete(`songs/${row.id}`).then((res) => {
         if (res == true) {
@@ -241,6 +288,7 @@ export default {
         }
       });
     },
+
     handleClose(done) {
       this.$confirm("确认关闭？")
         .then((_) => {
@@ -260,11 +308,9 @@ export default {
   position: relative;
   overflow: hidden;
 }
-
 .pic-uploader .el-upload:hover {
   border-color: #409eff;
 }
-
 .pic-uploader-icon {
   font-size: 28px;
   color: #8c939d;
@@ -273,7 +319,6 @@ export default {
   line-height: 178px;
   text-align: center;
 }
-
 .pic {
   width: 178px;
   height: 178px;
