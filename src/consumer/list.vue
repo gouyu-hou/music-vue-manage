@@ -99,12 +99,11 @@
           <el-input v-model="form.phoneNum"></el-input>
         </el-form-item>
         <el-form-item label="文件">
-          <!-- 上传组件 -->
           <el-upload
             class="upload-demo"
             action="http://localhost:8085/music/file/music/upload"
             :file-list="fileList"
-            :on-success="handleAvatarSuccess"
+            :on-success="handleFileSuccess"
           >
             <el-button size="small" type="primary">点击上传</el-button>
           </el-upload>
@@ -178,6 +177,16 @@ export default {
         console.log("上传成功，新路径已赋值:", this.form.avator);
       } else {
         this.$message.error(res.message || "上传失败");
+      }
+    },
+    // 在 methods 中添加
+    handleFileSuccess(res, file) {
+      if (!res.success) {
+        // 这里根据您的业务逻辑处理，不要赋值给 this.form.avator
+        console.log("文件上传路径：" + res.path);
+        this.$message.success("文件上传成功");
+      } else {
+        this.$message.error("文件上传失败");
       }
     },
     beforeAvatarUpload(file) {

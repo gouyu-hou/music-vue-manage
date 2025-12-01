@@ -61,7 +61,7 @@
         <el-form-item label="头像">
           <el-upload
             class="pic-uploader"
-            action="http://localhost:8085/music/file/avatar/upload"
+            action="http://localhost:8085/music/file/singerPic/upload"
             :show-file-list="false"
             :on-success="handlepicSuccess"
             :before-upload="beforepicUpload"

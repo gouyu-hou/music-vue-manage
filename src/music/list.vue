@@ -57,7 +57,7 @@
         <el-form-item label="歌单封面">
           <el-upload
             class="pic-uploader"
-            action="http://localhost:8085/music/file/upload"
+            action="http://localhost:8085/music/file/songListPic/upload"
             :show-file-list="false"
             :on-success="handlepicSuccess"
             :before-upload="beforepicUpload"
