@@ -3,11 +3,10 @@ import router from "../router"; // 【关键】引入路由，用于跳转
 import { Message } from "element-ui"; // 引入消息提示
 
 const service = axios.create({
-  // 修改为相对路径，这样浏览器会自动请求 "当前域名/music"
-  // Nginx 监听到 /music 开头的请求后，会帮我们转发给后端
-  baseURL: "/music",
+  // 【修改点】开发环境：直接写死后端地址
+  baseURL: "http://localhost:8085/music",
   timeout: 5000,
-  withCredentials: true,
+  withCredentials: true, // 允许携带 Cookie
 });
 
 // 请求拦截器 (通常保持不变)
