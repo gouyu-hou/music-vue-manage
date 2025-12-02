@@ -36,6 +36,8 @@ service.interceptors.response.use(
     if (error.response) {
       switch (error.response.status) {
         case 401:
+          // 1. 提示用户
+          Message.error("登录状态已失效，请重新登录");
           handleLoginExpire();
           break;
         case 403:
@@ -52,6 +54,7 @@ service.interceptors.response.use(
       }
     } else {
       Message.error("网络连接超时或异常");
+      handleLoginExpire();
     }
     return Promise.reject(error);
   }
@@ -59,9 +62,6 @@ service.interceptors.response.use(
 
 // 【新增】统一处理登录过期的方法
 function handleLoginExpire() {
-  // 1. 提示用户
-  Message.error("登录状态已失效，请重新登录");
-
   // 2. 清除本地缓存
   localStorage.removeItem("user");
   localStorage.removeItem("username");

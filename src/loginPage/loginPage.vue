@@ -87,6 +87,7 @@ export default {
         request.post("users/login", this.form).then((res) => {
           // 判断逻辑：后端返回对象且包含id
           if (res && res.id) {
+            console.log(res.id);
             this.$message.success("登录成功");
 
             // 【修改点2】如果后端返回的头像为空，强制使用本地默认头像
