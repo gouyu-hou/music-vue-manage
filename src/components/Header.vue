@@ -103,7 +103,7 @@ export default {
 
             // 处理头像路径：如果是相对路径，拼接服务器地址
             if (this.user.avator && !this.user.avator.startsWith("http")) {
-              this.user.avator = "http://localhost:8085" + this.user.avator;
+             this.user.avator = this.$apiServer + this.user.avator;
             }
 
             // 【可选】顺便更新一下本地缓存，保持同步

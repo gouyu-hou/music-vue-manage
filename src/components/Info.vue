@@ -23,7 +23,7 @@
         <el-form-item label="头像">
           <el-upload
             class="avatar-uploader"
-            action="http://localhost:8085/music/file/avatar/upload"
+            :action="$apiServer + '/music/file/avatar/upload'"
             :show-file-list="false"
             :on-success="handleAvatarSuccess"
             :before-upload="beforeAvatarUpload"
@@ -63,9 +63,10 @@ export default {
   },
   methods: {
     getImageUrl(path) {
-      console.log("path=" + "http://localhost:8085" + path);
-      return "http://localhost:8085" + path;
-    },
+  if (!path) return "";
+  if (path.indexOf("http") === 0) return path;
+  return this.$apiServer + path;
+},
 
     loadUserInfo() {
       let userStr = localStorage.getItem("user");

@@ -85,7 +85,7 @@
         <el-form-item label="歌曲封面">
           <el-upload
             class="pic-uploader"
-            action="http://localhost:8085/music/file/songPic/upload"
+            :action="$apiServer + '/music/file/songPic/upload'"
             :show-file-list="false"
             :on-success="handlepicSuccess"
             :before-upload="beforepicUpload"
@@ -148,8 +148,8 @@ export default {
     getImageUrl(path) {
       if (!path) return "";
       if (path.indexOf("http") === 0) return path;
-      console.log("path=" + "http://localhost:8085" + path);
-      return "http://localhost:8085" + path;
+      console.log("path=" + this.$apiServer + path);
+      return this.$apiServer + path;
     },
 
     handlepicSuccess(res, file) {

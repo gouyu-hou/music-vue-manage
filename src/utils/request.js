@@ -1,12 +1,12 @@
 import axios from "axios";
-import router from "../router"; // 【关键】引入路由，用于跳转
-import { Message } from "element-ui"; // 引入消息提示
+import router from "../router";
+import { Message } from "element-ui";
 
 const service = axios.create({
-  // 【修改点】开发环境：直接写死后端地址
-  baseURL: "http://localhost:8085/music",
+  // 🔥🔥🔥 【关键修改】：读取刚才定义的 API_HOST
+  baseURL: process.env.API_HOST + "/music", 
   timeout: 5000,
-  withCredentials: true, // 允许携带 Cookie
+  withCredentials: true,
 });
 
 // 请求拦截器 (通常保持不变)
